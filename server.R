@@ -1,11 +1,14 @@
 library(shiny)
 library(SmarterPoland)
- 
+EurostatTOC <- getEurostatTOC()
+code="ei_naga_a"
+data <- getEurostatRCV(kod = code) 
 
 # Define server logic required to summarize and view the 
 # selected dataset
 shinyServer(function(input, output) {
-  
+             
+                   
   selcountry<- reactive({
       toString(input$country)
     })
@@ -15,28 +18,22 @@ shinyServer(function(input, output) {
              "General Government Deficit" = "NA-GDEF"
              )
     })
-  EurostatTOC <- getEurostatTOC()
-  code="ei_naga_a"
-  data <- getEurostatRCV(kod = code)
-  mydata<- reactive({
-     a<-subset(data,data$geo %in% input$country) # & (data$indic %in% input$metric) & (data$unit == "MIO-EUR"),]
-     a<-droplevels(a)
-     return(a)
-     }) 
-    
   
-
+  dd<- reactive ({ 
+    a<-subset(data, (geo %in% selcountry()) & (indic %in% selmetric() )) 
+    return(a)
+  })
+                   
   output$view <- renderPlot({
-    
-    plot(x=mydata()$time,
-         y=mydata()$value,
+      plot(x=dd()$time,
+         y=dd()$value,
          xlab = "Fiscal Year",
          main = paste0("Financial metric - ",toString(input$metric)))
   })
 
   # Generate a summary of the dataset
   output$summary <- renderPrint({
-    summary(mydata()$value)
+    summary(dd()$value)
   })
   
 })
